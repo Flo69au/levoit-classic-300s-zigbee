@@ -1,0 +1,9 @@
+# Partition table — Levoit Zigbee ESP32-C6 (flash 2MB) avec OTA
+# Name,     Type,  SubType,  Offset,   Size
+nvs,        data,  nvs,      0x9000,   0x4000
+otadata,    data,  ota,      0xD000,   0x2000
+phy_init,   data,  phy,      0xF000,   0x1000
+factory,    app,   factory,  0x10000,  0x90000
+ota_0,      app,   ota_0,    0xA0000,  0x90000
+zb_storage, data,  fat,      0x130000, 0x10000
+zb_fct,     data,  fat,      0x140000, 0x1000

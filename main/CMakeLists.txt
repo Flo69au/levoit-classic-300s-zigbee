@@ -1,0 +1,14 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "pwm/pwm.c"
+        "sensors/sensors.c"
+        "zigbee/zigbee.c"
+        "ota/ota.c"
+    INCLUDE_DIRS
+        "."
+        "pwm"
+        "sensors"
+        "zigbee"
+        "ota"
+)
