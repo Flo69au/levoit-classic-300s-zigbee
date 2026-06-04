@@ -138,7 +138,7 @@ def main():
     subprocess.run(["git", "add", OTA_INDEX_FILE], check=True)
     subprocess.run(["git", "commit", "-m", f"OTA index — firmware {tag}"], check=True)
     subprocess.run(["git", "push"], check=True)
-    print("Done ✓")
+    print("Done OK")
 
     # ── 7. Résumé ─────────────────────────────────────────
     print(f"""
