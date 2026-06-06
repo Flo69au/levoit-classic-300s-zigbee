@@ -6,7 +6,7 @@
 // Identifiants OTA (doivent correspondre au fichier .ota généré)
 #define OTA_UPGRADE_MANUFACTURER   0x131B        // Espressif
 #define OTA_UPGRADE_IMAGE_TYPE     0x0000
-#define OTA_UPGRADE_FILE_VERSION   0x01000000    // v1.0.0.0
+#define OTA_UPGRADE_FILE_VERSION   0x01000000   // v1.0.0.0
 #define OTA_UPGRADE_MAX_DATA_SIZE  64
 
 /**
