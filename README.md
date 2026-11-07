@@ -51,6 +51,12 @@ ota:
 
 `ota_index.json` ne contient que ce projet et **jamais `"force": true"`**.
 
+## Zigbee2MQTT
+
+Convertisseur externe : `z2m_converter.js` (à copier dans `external_converters/`,
+avec `advanced.enable_external_js: true`). Il expose la brumisation (lumière dimmable)
+et le niveau d'eau (`water_ok`) et active l'OTA. Non testé.
+
 ## Comportement
 
 - Brumisation et ventilateur couplés (curseur 0–100 %), CS bas et PWM à 0 à l'arrêt.
