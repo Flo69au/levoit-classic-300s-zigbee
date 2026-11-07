@@ -1,47 +1,63 @@
 # Levoit Classic 300S → Zigbee (XIAO ESP32-C6, Arduino IDE)
 
-Firmware Arduino : `arduino/levoit_zigbee_arduino/levoit_zigbee_arduino.ino`
+Firmware : `arduino/levoit_zigbee_arduino/levoit_zigbee_arduino.ino`
+
+| | |
+|---|---|
+| Carte | XIAO ESP32-C6 |
+| Fabricant / type d'image OTA | `0x131B` / `0x0000` |
+| Modèle Zigbee | `Classic300S-Fan` (fabricant `Levoit`) |
+| Endpoints | 1 = brumisation + ventilateur (On/Off + Level), 2 = niveau d'eau (Binary Input) |
 
 ## Réglages Arduino IDE
 
 - Carte : `XIAO_ESP32C6`
 - Zigbee Mode : `Zigbee ED (end device)`
-- Partition Scheme : `Zigbee 4MB with spiffs` (obligatoire pour l'OTA)
-- Core ESP32 : 3.2.0 ou plus récent
+- Partition Scheme : `Zigbee 4MB with spiffs`
+- Core ESP32 : 3.3.12 (même version que la CI)
+- Erase All Flash : Disabled (pour garder l'appairage)
 
 ## Premier flash (USB)
 
-La table de partitions ESP-IDF précédente (une seule partition OTA de 576 Ko) est trop
-petite pour un firmware Arduino. Le passage à Arduino se fait donc **une fois par USB**.
-Après ce flash, les mises à jour se font en OTA.
+L'ancienne table de partitions ESP-IDF (une seule partition OTA de 576 Ko) est trop petite
+pour un firmware Arduino : le passage à Arduino se fait **une fois par USB**. Ensuite, tout
+passe par l'OTA Zigbee. Refaire l'appairage après ce flash (appui de 5 s sur le switch).
 
-L'appareil devra être réappairé (reset réseau : appui long de 5 s sur le switch).
+La version par défaut du sketch (`OTA_FW_VERSION`, flash USB) doit être égale au dernier
+tag publié.
 
 ## Publier une mise à jour OTA
 
-1. Dans le sketch, incrémenter `OTA_FILE_VERSION` (ex. 3).
-2. Arduino IDE : `Croquis > Exporter les binaires compilés`.
-3. `python generate_ota.py 3 <token_github>`
-   - génère le `.ota`, crée la release GitHub, met à jour `ota_index.json`
-4. Dans `configuration.yaml` de Zigbee2MQTT, pointer sur l'index commun
-   [zigbee-ota](https://github.com/Flo69au/zigbee-ota), qui reprend toutes les heures le `ota_index.json`
-   de ce dépôt (et ceux de mes autres projets Zigbee) :
+Version = `0xMMmmPP00` : v1.0 → `0x01000000`, v1.1 → `0x01010000`.
 
-   ```yaml
-   ota:
-     zigbee_ota_override_index_location: https://raw.githubusercontent.com/Flo69au/zigbee-ota/main/ota_index.json
-   ```
+1. Modifier le sketch, puis mettre à jour la valeur par défaut de `OTA_FW_VERSION`.
+2. GitHub : *Releases → Draft a new release → nouveau tag `v1.1` → Publish release*
+   (ou pousser le tag).
+3. Le workflow `.github/workflows/ota-release.yml` compile avec la version du tag, fabrique
+   l'image `.zigbee`, la publie dans la Release et met à jour `ota_index.json`.
+4. L'index commun (`Flo69au/zigbee-ota`) fusionne cet index toutes les heures
+   (ou *Actions → Fusion des index OTA → Run workflow*).
+5. Zigbee2MQTT : fiche de l'appareil → OTA → *Check for updates* → *Update* (~1 h).
 
-   Pour une prise en compte immédiate : dépôt `zigbee-ota` → *Actions* → *Fusion des index OTA* → *Run workflow*.
+Configuration Zigbee2MQTT (index commun, identique pour tous mes projets Zigbee) :
 
-5. Redémarrer Z2M, puis l'appareil → OTA → Check.
+```yaml
+ota:
+  zigbee_ota_override_index_location: https://raw.githubusercontent.com/Flo69au/zigbee-ota/main/ota_index.json
+  disable_automatic_update_check: false
+  update_check_interval: 1440
+  default_maximum_data_size: 50
+```
 
-Le numéro passé à `generate_ota.py` doit être égal à `OTA_FILE_VERSION` du sketch compilé
-et strictement supérieur à la version en cours sur l'appareil.
+`ota_index.json` ne contient que ce projet et **jamais `"force": true"`**.
 
 ## Comportement
 
 - Brumisation et ventilateur couplés (curseur 0–100 %), CS bas et PWM à 0 à l'arrêt.
+  PWM calibré : brumisation 156,25 kHz / 8 bits (seuil 110), ventilateur 25 kHz / 10 bits
+  (courbe quadratique, seuil 213).
 - LED : clignote (300 ms) en attente de réseau, fixe quand la brumisation tourne,
-  clignotement rapide si le réservoir est vide.
-- Switch D9 : appui < 3 s = appairage, appui > 5 s = reset réseau + réappairage.
+  clignotement rapide (150 ms) si le réservoir est vide, très rapide (100 ms) pendant une OTA.
+- Switch D9 : appui < 3 s = appairage, appui > 5 s = reset réseau + réappairage
+  (désactivé pendant une OTA).
+- Garde-fou OTA : redémarrage si l'OTA se termine sans redémarrer ou dure plus de 2 h.

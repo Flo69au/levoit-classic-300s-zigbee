@@ -52,14 +52,16 @@
 #define EP_WATER         2
 
 // ── OTA ───────────────────────────────────────────────
-// Doivent correspondre à generate_ota.py (MANUFACTURER_CODE / IMAGE_TYPE).
-// FILE_VERSION : à incrémenter à chaque nouvelle version OTA,
-// et doit être égal au numéro passé à `python generate_ota.py <version> ...`
-#define OTA_MANUFACTURER   0x131B
-#define OTA_IMAGE_TYPE     0x0000
-#define OTA_FILE_VERSION   2
-#define OTA_HW_VERSION     0x0001
-#define OTA_MAX_DATA_SIZE  64
+// Version = 0xMMmmPP00 (majeur.mineur.correctif) : v1.0 -> 0x01000000,
+// v1.1 -> 0x01010000. Le workflow GitHub impose la version du tag via
+// -DOTA_FW_VERSION ; la valeur par défaut ci-dessous (flash USB) doit être
+// égale au dernier tag publié.
+#ifndef OTA_FW_VERSION
+#define OTA_FW_VERSION       0x01000000  // v1.0
+#endif
+#define OTA_HW_VERSION       0x0001
+#define OTA_MANUFACTURER_ID  0x131B      // doit matcher l'image .zigbee généré
+#define OTA_IMAGE_TYPE       0x0000      // doit matcher l'image .zigbee généré
 
 ZigbeeDimmableLight zbMist(EP_HUMIDIFIER);   // On/Off + Level Control
 ZigbeeBinary        zbWater(EP_WATER);       // niveau d'eau
@@ -69,6 +71,26 @@ static uint8_t  currentPercent = 0;
 static bool     lastWaterOk    = true;
 static bool     otaRequested   = false;
 static uint32_t lastWaterCheck = 0;
+
+// ── Garde-fou OTA ─────────────────────────────────────
+// Sur un ABORT, la lib Zigbee ne prévient pas le sketch et garde un état
+// interne faux qui fait échouer les tentatives suivantes. Si l'OTA se termine
+// sans redémarrage, ou dure plus de 2 h, on redémarre l'ESP.
+#define OTA_MAX_DURATION_MS (2UL * 60UL * 60UL * 1000UL)
+volatile bool          otaRunning = false;
+volatile bool          otaEnded   = false;   // terminée sans redémarrage = échec
+volatile unsigned long otaStartMs = 0;
+
+void onOTAStateChange(bool active) {
+  if (active) {
+    otaStartMs = millis();
+    otaEnded   = false;
+  } else if (otaRunning) {
+    otaEnded = true;   // en cas de succès la lib redémarre d'elle-même
+  }
+  otaRunning = active;
+  Serial.println(active ? "OTA: mise à jour démarrée" : "OTA: terminée");
+}
 
 // ── Conversions de duty ───────────────────────────────
 // Brumisation : linéaire + seuil minimum AW2205 (8 bits)
@@ -222,8 +244,9 @@ void setup() {
   // Appareil Zigbee (mêmes noms que le firmware ESP-IDF)
   zbMist.setManufacturerAndModel("Levoit", "Classic300S-Fan");
   zbMist.onLightChange(onMistChange);
-  zbMist.addOTAClient(OTA_FILE_VERSION, OTA_FILE_VERSION, OTA_HW_VERSION,
-                      OTA_MANUFACTURER, OTA_IMAGE_TYPE, OTA_MAX_DATA_SIZE);
+  zbMist.addOTAClient(OTA_FW_VERSION, OTA_FW_VERSION, OTA_HW_VERSION,
+                      OTA_MANUFACTURER_ID, OTA_IMAGE_TYPE);
+  zbMist.onOTAStateChange(onOTAStateChange);
   Zigbee.addEndpoint(&zbMist);
 
   zbWater.addBinaryInput();
@@ -235,8 +258,11 @@ void setup() {
     Serial.println("Échec démarrage Zigbee, redémarrage...");
     ESP.restart();
   }
-  Serial.printf("Zigbee démarré (firmware OTA v%d), recherche du réseau...\n",
-                OTA_FILE_VERSION);
+  Serial.printf("Zigbee démarré, firmware v%lu.%lu.%lu (0x%08lX), recherche du réseau...\n",
+                (unsigned long)((OTA_FW_VERSION >> 24) & 0xFF),
+                (unsigned long)((OTA_FW_VERSION >> 16) & 0xFF),
+                (unsigned long)((OTA_FW_VERSION >> 8) & 0xFF),
+                (unsigned long)OTA_FW_VERSION);
 
   lastWaterOk = waterOk();
   zbWater.setBinaryInput(lastWaterOk);
@@ -244,6 +270,25 @@ void setup() {
 
 // ── Loop ──────────────────────────────────────────────
 void loop() {
+  // Garde-fou OTA : redémarrage si interrompue ou bloquée ; pendant une OTA,
+  // LED qui clignote vite et switch désactivé (reset réseau ou coupure en plein
+  // flash = risque de brique).
+  if (otaEnded) {
+    Serial.println("OTA interrompue -> redémarrage pour repartir sur un état propre");
+    delay(2000);
+    ESP.restart();
+  }
+  if (otaRunning) {
+    if (millis() - otaStartMs > OTA_MAX_DURATION_MS) {
+      Serial.println("OTA bloquée depuis trop longtemps -> redémarrage");
+      delay(500);
+      ESP.restart();
+    }
+    digitalWrite(PIN_LED, (millis() / 100) % 2);
+    delay(10);
+    return;
+  }
+
   handleSwitch();
   updateLed();
 
