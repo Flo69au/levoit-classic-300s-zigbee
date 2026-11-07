@@ -2,22 +2,27 @@
 Génère le fichier .ota, crée une GitHub Release et met à jour ota_index.json.
 
 Usage :
-  python generate_ota.py <version> <github_token>
+  python generate_ota.py <version> <github_token> [chemin_du_bin]
 
-  version      : entier (ex: 2)
-  github_token : Personal Access Token GitHub (scope: repo)
+  version       : entier, doit être égal à OTA_FILE_VERSION du sketch Arduino
+  github_token  : Personal Access Token GitHub (scope: repo)
+  chemin_du_bin : (optionnel) binaire de l'application. Par défaut, le
+                  fichier levoit_zigbee_arduino.ino.bin exporté par
+                  Arduino IDE (Croquis > Exporter les binaires compilés).
+                  Ne PAS utiliser les fichiers .merged.bin / .bootloader.bin /
+                  .partitions.bin.
 
 Exemple :
-  python generate_ota.py 2 ghp_xxxxxxxxxxxxxxxxxxxx
+  python generate_ota.py 3 ghp_xxxxxxxxxxxxxxxxxxxx
 """
 
-import struct, hashlib, json, os, sys, subprocess, urllib.request, urllib.error
+import struct, hashlib, json, os, sys, glob, subprocess, urllib.request, urllib.error
 
 # ── Config ────────────────────────────────────────────────
 MANUFACTURER_CODE = 0x131B
 IMAGE_TYPE        = 0x0000
 HEADER_STRING     = "Levoit Classic 300S Zigbee"
-INPUT_BIN         = "build/levoit_zigbee.bin"
+BIN_GLOB          = "arduino/levoit_zigbee_arduino/build/**/levoit_zigbee_arduino.ino.bin"
 
 GITHUB_REPO       = "Flo69au/levoit-classic-300s-zigbee"
 GITHUB_BRANCH     = "main"
@@ -83,11 +88,23 @@ def main():
     ota_name = f"levoit_300s_{tag}.ota"
 
     # ── 1. Lire le binaire ────────────────────────────────
-    if not os.path.exists(INPUT_BIN):
-        print(f"Erreur : {INPUT_BIN} introuvable. Lancez 'idf.py build' d'abord.")
+    if len(sys.argv) >= 4:
+        input_bin = sys.argv[3]
+    else:
+        found = sorted(glob.glob(BIN_GLOB, recursive=True), key=os.path.getmtime)
+        input_bin = found[-1] if found else None
+
+    if not input_bin or not os.path.exists(input_bin):
+        print("Erreur : binaire introuvable. Dans Arduino IDE, faites "
+              "Croquis > Exporter les binaires compilés, "
+              "ou passez le chemin du .ino.bin en 3e argument.")
+        sys.exit(1)
+    if input_bin.endswith((".merged.bin", ".bootloader.bin", ".partitions.bin")):
+        print("Erreur : utilisez le fichier .ino.bin (application seule).")
         sys.exit(1)
 
-    with open(INPUT_BIN, "rb") as f:
+    print(f"Binaire    : {input_bin}")
+    with open(input_bin, "rb") as f:
         fw_data = f.read()
 
     print(f"Firmware   : {len(fw_data):,} bytes")
