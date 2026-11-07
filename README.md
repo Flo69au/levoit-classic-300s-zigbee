@@ -23,12 +23,16 @@ L'appareil devra être réappairé (reset réseau : appui long de 5 s sur le swi
 2. Arduino IDE : `Croquis > Exporter les binaires compilés`.
 3. `python generate_ota.py 3 <token_github>`
    - génère le `.ota`, crée la release GitHub, met à jour `ota_index.json`
-4. Dans `configuration.yaml` de Zigbee2MQTT :
+4. Dans `configuration.yaml` de Zigbee2MQTT, pointer sur l'index commun
+   [zigbee-ota](https://github.com/Flo69au/zigbee-ota), qui reprend toutes les heures le `ota_index.json`
+   de ce dépôt (et ceux de mes autres projets Zigbee) :
 
    ```yaml
    ota:
-     zigbee_ota_override_index_location: https://raw.githubusercontent.com/Flo69au/levoit-classic-300s-zigbee/main/ota_index.json
+     zigbee_ota_override_index_location: https://raw.githubusercontent.com/Flo69au/zigbee-ota/main/ota_index.json
    ```
+
+   Pour une prise en compte immédiate : dépôt `zigbee-ota` → *Actions* → *Fusion des index OTA* → *Run workflow*.
 
 5. Redémarrer Z2M, puis l'appareil → OTA → Check.
 
