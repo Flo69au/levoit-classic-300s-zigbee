@@ -3,8 +3,8 @@
  *
  * Réglages Arduino IDE (menu Outils) :
  *   Carte             : XIAO_ESP32C6
- *   Zigbee Mode       : Zigbee ED (end device)
- *   Partition Scheme  : Zigbee 4MB with spiffs   <- indispensable pour l'OTA
+ *   Zigbee Mode       : Zigbee ZCZR (coordinator/router)
+ *   Partition Scheme  : Zigbee ZCZR 4MB with spiffs   <- indispensable pour l'OTA
  *   Core ESP32        : 3.2.0 ou plus récent (client OTA Zigbee inclus)
  *
  * Branchement :
@@ -18,8 +18,8 @@
  * Valeurs PWM reprises du firmware ESP-IDF calibré sur le matériel réel.
  */
 
-#ifndef ZIGBEE_MODE_ED
-#error "Outils > Zigbee Mode > Zigbee ED (end device)"
+#ifndef ZIGBEE_MODE_ZCZR
+#error "Sélectionne 'Zigbee ZCZR (coordinator/router)' dans Outils -> Zigbee mode (et Partition Scheme 'Zigbee ZCZR 4MB with spiffs')"
 #endif
 
 #include "Zigbee.h"
@@ -254,7 +254,8 @@ void setup() {
   zbWater.setBinaryInputDescription("Water level OK");
   Zigbee.addEndpoint(&zbWater);
 
-  if (!Zigbee.begin()) {
+  // Appareil sur secteur : routeur Zigbee (relaie le réseau maillé)
+  if (!Zigbee.begin(ZIGBEE_ROUTER)) {
     Serial.println("Échec démarrage Zigbee, redémarrage...");
     ESP.restart();
   }
