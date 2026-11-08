@@ -250,7 +250,7 @@ void setup() {
   Zigbee.addEndpoint(&zbMist);
 
   zbWater.addBinaryInput();
-  zbWater.setBinaryInputApplication(BINARY_INPUT_APPLICATION_TYPE_SECURITY_ALARM);
+  zbWater.setBinaryInputApplication(BINARY_INPUT_APPLICATION_TYPE_SECURITY_OTHER);
   zbWater.setBinaryInputDescription("Water level OK");
   Zigbee.addEndpoint(&zbWater);
 
