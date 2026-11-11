@@ -62,7 +62,7 @@
 // -DOTA_FW_VERSION ; la valeur par défaut ci-dessous (flash USB) doit être
 // égale au dernier tag publié.
 #ifndef OTA_FW_VERSION
-#define OTA_FW_VERSION       0x01000000  // v1.0
+#define OTA_FW_VERSION       0x01010000  // v1.1
 #endif
 #define OTA_HW_VERSION       0x0001
 #define OTA_MANUFACTURER_ID  0x131B      // doit matcher l'image .zigbee généré
