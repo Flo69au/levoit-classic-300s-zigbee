@@ -14,6 +14,7 @@ Firmware : `arduino/levoit_zigbee_arduino/levoit_zigbee_arduino.ino`
 - Carte : `XIAO_ESP32C6`
 - Zigbee Mode : `Zigbee ZCZR (coordinator/router)` (l'appareil est un routeur Zigbee)
 - Partition Scheme : `Zigbee ZCZR 4MB with spiffs`
+- USB CDC On Boot : `Enabled` (GPIO16/17 servent à KS et au ventilateur)
 - Core ESP32 : 3.3.12 (même version que la CI)
 - Erase All Flash : Disabled (pour garder l'appairage)
 

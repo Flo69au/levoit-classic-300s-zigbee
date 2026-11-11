@@ -31,7 +31,7 @@ permissions:
 env:
   SKETCH_DIR: arduino/levoit_zigbee_arduino
   SKETCH_NAME: levoit_zigbee_arduino
-  FQBN: esp32:esp32:XIAO_ESP32C6:PartitionScheme=zigbee_zczr,ZigbeeMode=zczr
+  FQBN: esp32:esp32:XIAO_ESP32C6:PartitionScheme=zigbee_zczr,ZigbeeMode=zczr,CDCOnBoot=cdc
   ESP32_CORE_VERSION: "3.3.12"
   ESP32_INDEX_URL: https://espressif.github.io/arduino-esp32/package_esp32_index.json
   # Doivent correspondre au sketch (OTA_MANUFACTURER_ID / OTA_IMAGE_TYPE / setManufacturerAndModel)

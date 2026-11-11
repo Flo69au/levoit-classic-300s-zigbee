@@ -5,14 +5,15 @@
  *   Carte             : XIAO_ESP32C6
  *   Zigbee Mode       : Zigbee ZCZR (coordinator/router)
  *   Partition Scheme  : Zigbee ZCZR 4MB with spiffs   <- indispensable pour l'OTA
+ *   USB CDC On Boot   : Enabled                       <- libère GPIO16/17 (UART)
  *   Core ESP32        : 3.2.0 ou plus récent (client OTA Zigbee inclus)
  *
  * Branchement (numéros GPIO) :
- *   GPIO4  -> CS    (connecteur blanc WHQ-DCP34V3)       pastille arrière MTMS
- *   GPIO5  -> PWM   (connecteur blanc, brumisation)      pastille arrière MTDI
- *   GPIO6  <- KS    (connecteur blanc, niveau d'eau)     pastille arrière MTCK
+ *   GPIO22 -> CS    (connecteur blanc WHQ-DCP34V3)       broche D4
+ *   GPIO23 -> PWM   (connecteur blanc, brumisation)      broche D5
+ *   GPIO16 <- KS    (connecteur blanc, niveau d'eau)     broche D6
  *   GPIO17 -> Gate LR7843 via 100 ohm (ventilateur 12V)  broche D7
- *   GPIO8  -> LED jaune + résistance                     NON sorti sur la XIAO !
+ *   GPIO19 -> LED jaune + résistance                     broche D8
  *   GPIO20 <- switch vers GND (appairage)                broche D9
  *
  * Valeurs PWM reprises du firmware ESP-IDF calibré sur le matériel réel.
@@ -22,18 +23,21 @@
 #error "Sélectionne 'Zigbee ZCZR (coordinator/router)' dans Outils -> Zigbee mode (et Partition Scheme 'Zigbee ZCZR 4MB with spiffs')"
 #endif
 
+// GPIO16 (KS) et GPIO17 (ventilateur) sont aussi TX/RX de l'UART par défaut :
+// sans USB CDC, Serial s'y attache et perd ses broches au démarrage.
+#if !defined(ARDUINO_USB_CDC_ON_BOOT) || (ARDUINO_USB_CDC_ON_BOOT == 0)
+#error "Outils -> USB CDC On Boot -> Enabled (GPIO16/17 sont utilisés par KS et le ventilateur)"
+#endif
+
 #include "Zigbee.h"
 
-// ── Broches ───────────────────────────────────────────
-// Numéros GPIO bruts (et non D4, D5... qui sont d'autres GPIO sur la XIAO).
-#define PIN_CS      4     // Chip Select transducteur (enable)
-#define PIN_MIST    5     // PWM brumisation
-#define PIN_KS      6     // Détection niveau d'eau (flotteur)
-#define PIN_FAN     17    // PWM ventilateur (via LR7843) — D7
-#define PIN_LED     8     // LED état — ATTENTION : GPIO8 n'est pas accessible
-                          // sur la XIAO ESP32-C6 ; à changer (ex. 19 = D8)
-                          // ou à relier à une pastille libre
-#define PIN_SWITCH  20    // Switch appairage — D9
+// ── Broches (numéros GPIO) ────────────────────────────
+#define PIN_CS      22    // D4 — Chip Select transducteur (enable)
+#define PIN_MIST    23    // D5 — PWM brumisation
+#define PIN_KS      16    // D6 — Détection niveau d'eau (flotteur)
+#define PIN_FAN     17    // D7 — PWM ventilateur (via LR7843)
+#define PIN_LED     19    // D8 — LED état
+#define PIN_SWITCH  20    // D9 — Switch appairage
 
 // ── PWM (calibré sur hardware réel) ───────────────────
 #define FREQ_MIST        156250   // résonance piézo AW2205 (40 MHz / 256)
