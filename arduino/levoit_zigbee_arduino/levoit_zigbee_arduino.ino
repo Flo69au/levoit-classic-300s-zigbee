@@ -7,13 +7,13 @@
  *   Partition Scheme  : Zigbee ZCZR 4MB with spiffs   <- indispensable pour l'OTA
  *   Core ESP32        : 3.2.0 ou plus récent (client OTA Zigbee inclus)
  *
- * Branchement :
- *   D4 -> CS    (connecteur blanc WHQ-DCP34V3)
- *   D5 -> PWM   (connecteur blanc, brumisation AW2205)
- *   D6 <- KS    (connecteur blanc, niveau d'eau)
- *   D7 -> Gate LR7843 via 100 ohm (ventilateur SF5020SL 12V)
- *   D8 -> LED jaune + résistance
- *   D9 <- switch vers GND (appairage)
+ * Branchement (numéros GPIO) :
+ *   GPIO4  -> CS    (connecteur blanc WHQ-DCP34V3)       pastille arrière MTMS
+ *   GPIO5  -> PWM   (connecteur blanc, brumisation)      pastille arrière MTDI
+ *   GPIO6  <- KS    (connecteur blanc, niveau d'eau)     pastille arrière MTCK
+ *   GPIO17 -> Gate LR7843 via 100 ohm (ventilateur 12V)  broche D7
+ *   GPIO8  -> LED jaune + résistance                     NON sorti sur la XIAO !
+ *   GPIO20 <- switch vers GND (appairage)                broche D9
  *
  * Valeurs PWM reprises du firmware ESP-IDF calibré sur le matériel réel.
  */
@@ -25,12 +25,15 @@
 #include "Zigbee.h"
 
 // ── Broches ───────────────────────────────────────────
-#define PIN_CS      D4    // GPIO22
-#define PIN_MIST    D5    // GPIO23
-#define PIN_KS      D6    // GPIO16
-#define PIN_FAN     D7    // GPIO17
-#define PIN_LED     D8    // GPIO19
-#define PIN_SWITCH  D9    // GPIO20
+// Numéros GPIO bruts (et non D4, D5... qui sont d'autres GPIO sur la XIAO).
+#define PIN_CS      4     // Chip Select transducteur (enable)
+#define PIN_MIST    5     // PWM brumisation
+#define PIN_KS      6     // Détection niveau d'eau (flotteur)
+#define PIN_FAN     17    // PWM ventilateur (via LR7843) — D7
+#define PIN_LED     8     // LED état — ATTENTION : GPIO8 n'est pas accessible
+                          // sur la XIAO ESP32-C6 ; à changer (ex. 19 = D8)
+                          // ou à relier à une pastille libre
+#define PIN_SWITCH  20    // Switch appairage — D9
 
 // ── PWM (calibré sur hardware réel) ───────────────────
 #define FREQ_MIST        156250   // résonance piézo AW2205 (40 MHz / 256)
