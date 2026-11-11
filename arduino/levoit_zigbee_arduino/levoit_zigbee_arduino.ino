@@ -55,6 +55,7 @@
 // ── Zigbee ────────────────────────────────────────────
 #define EP_HUMIDIFIER    1
 #define EP_WATER         2
+#define WATER_REPORT_MS  60000   // renvoi périodique du niveau d'eau (60 s)
 
 // ── OTA ───────────────────────────────────────────────
 // Version = 0xMMmmPP00 (majeur.mineur.correctif) : v1.0 -> 0x01000000,
@@ -62,7 +63,7 @@
 // -DOTA_FW_VERSION ; la valeur par défaut ci-dessous (flash USB) doit être
 // égale au dernier tag publié.
 #ifndef OTA_FW_VERSION
-#define OTA_FW_VERSION       0x01010000  // v1.1
+#define OTA_FW_VERSION       0x01020000  // v1.2
 #endif
 #define OTA_HW_VERSION       0x0001
 #define OTA_MANUFACTURER_ID  0x131B      // doit matcher l'image .zigbee généré
@@ -76,6 +77,7 @@ static uint8_t  currentPercent = 0;
 static bool     lastWaterOk    = true;
 static bool     otaRequested   = false;
 static uint32_t lastWaterCheck = 0;
+static uint32_t lastWaterReport = 0;   // dernier envoi périodique vers Z2M
 
 // ── Garde-fou OTA ─────────────────────────────────────
 // Sur un ABORT, la lib Zigbee ne prévient pas le sketch et garde un état
@@ -296,6 +298,14 @@ void loop() {
   if (millis() - lastWaterCheck >= 2000) {
     lastWaterCheck = millis();
     checkWater();
+  }
+
+  // Renvoi périodique du niveau d'eau : un seul envoi après la connexion peut
+  // être perdu (Z2M pas encore prêt) et l'entité reste alors "N/A".
+  if (Zigbee.connected() && millis() - lastWaterReport >= WATER_REPORT_MS) {
+    lastWaterReport = millis();
+    zbWater.setBinaryInput(lastWaterOk);
+    zbWater.reportBinaryInput();
   }
   delay(10);
 }
