@@ -1,12 +1,12 @@
 [
   {
-    "fileName": "131B-0000-01010000-ota-file.zigbee",
-    "fileVersion": 16842752,
-    "fileSize": 730478,
-    "url": "https://github.com/Flo69au/levoit-classic-300s-zigbee/releases/download/v1.1/131B-0000-01010000-ota-file.zigbee",
+    "fileName": "131B-0000-01020000-ota-file.zigbee",
+    "fileVersion": 16908288,
+    "fileSize": 730558,
+    "url": "https://github.com/Flo69au/levoit-classic-300s-zigbee/releases/download/v1.2/131B-0000-01020000-ota-file.zigbee",
     "imageType": 0,
     "manufacturerCode": 4891,
     "modelId": "Classic300S-Fan",
-    "sha512": "350a606421c548dad66e847b14da73893cbf9c87a1f5e539f9a09c76b048f196158457e8c7ddd3e1b7b17a078eaeb20244b4a5e4f1b30ddb47c6780e97a9879a"
+    "sha512": "3ec8511f7d7cb6acb852b26f6498c1393843f7bf9cc25a59f3d8fcd65839325b6ba9986cc2fb14ba934d2da20d303e4c19623215cb4d22b85904c16b45a6695b"
   }
 ]
