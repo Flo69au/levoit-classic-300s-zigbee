@@ -14,7 +14,7 @@
  *   GPIO16 <- KS    (connecteur blanc, niveau d'eau)     broche D6
  *   GPIO17 -> Gate LR7843 via 100 ohm (ventilateur 12V)  broche D7
  *   GPIO19 -> LED jaune + résistance                     broche D8
- *   GPIO20 <- switch vers GND (appairage)                broche D9
+ *   GPIO20 <- switch vers GND (appui 5 s = appairage)    broche D9
  *
  * Valeurs PWM reprises du firmware ESP-IDF calibré sur le matériel réel.
  */
@@ -50,9 +50,7 @@
 #define MAX_DUTY_FAN     1023
 
 // ── Switch ────────────────────────────────────────────
-#define LONG_PRESS_MS    5000
-#define SHORT_PRESS_MAX  3000
-#define DEBOUNCE_MS      50
+#define PAIRING_PRESS_MS 5000   // maintenir 5 s pour lancer l'appairage
 
 // ── Zigbee ────────────────────────────────────────────
 #define EP_HUMIDIFIER    1
@@ -190,44 +188,30 @@ void blinkLed(int times, int onMs, int offMs) {
   }
 }
 
-// ── Appairage (network steering) ──────────────────────
-void startPairing() {
-  esp_zb_lock_acquire(portMAX_DELAY);
-  esp_zb_bdb_start_top_level_commissioning(ESP_ZB_BDB_MODE_NETWORK_STEERING);
-  esp_zb_lock_release();
-}
-
 // ── Switch appairage ──────────────────────────────────
+// Un seul geste : maintenir le switch 5 s.
+// Le réseau Zigbee actuel est effacé et l'appareil redémarre en mode appairage
+// (LED qui clignote jusqu'à la connexion).
 void handleSwitch() {
   static bool     pressed   = false;
-  static bool     longDone  = false;
+  static bool     fired     = false;
   static uint32_t pressedAt = 0;
 
   bool down = (digitalRead(PIN_SWITCH) == LOW);
 
   if (down && !pressed) {
     pressed   = true;
-    longDone  = false;
+    fired     = false;
     pressedAt = millis();
-  }
-
-  // appui long : déclenché dès 5 s
-  if (down && pressed && !longDone && (millis() - pressedAt >= LONG_PRESS_MS)) {
-    longDone = true;
-    Serial.println("Appui long -> reset réseau + réappairage");
-    blinkLed(5, 400, 400);
-    Zigbee.factoryReset();      // efface le réseau et redémarre
-  }
-
-  // appui court : au relâchement (3-5 s ignoré)
-  if (!down && pressed) {
+  } else if (!down) {
     pressed = false;
-    uint32_t held = millis() - pressedAt;
-    if (!longDone && held >= DEBOUNCE_MS && held < SHORT_PRESS_MAX) {
-      Serial.println("Appui court -> appairage");
-      blinkLed(3, 100, 100);
-      startPairing();
-    }
+  }
+
+  if (pressed && !fired && (millis() - pressedAt >= PAIRING_PRESS_MS)) {
+    fired = true;
+    Serial.println("Appui 5 s -> effacement du réseau + appairage");
+    blinkLed(5, 150, 150);       // confirmation visuelle
+    Zigbee.factoryReset();       // efface le réseau et redémarre
   }
 }
 

@@ -65,6 +65,6 @@ et le niveau d'eau (`water_ok`) et active l'OTA. Non testé.
   (courbe quadratique, seuil 213).
 - LED : clignote (300 ms) en attente de réseau, fixe quand la brumisation tourne,
   clignotement rapide (150 ms) si le réservoir est vide, très rapide (100 ms) pendant une OTA.
-- Switch D9 : appui < 3 s = appairage, appui > 5 s = reset réseau + réappairage
-  (désactivé pendant une OTA).
+- Switch D9 : maintenir 5 s = effacement du réseau Zigbee + appairage
+  (désactivé pendant une OTA). Aucune autre fonction.
 - Garde-fou OTA : redémarrage si l'OTA se termine sans redémarrer ou dure plus de 2 h.
