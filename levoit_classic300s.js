@@ -42,8 +42,8 @@ export default {
             endpointName: 'water',
             cluster: 'genBinaryInput',
             attribute: 'presentValue',
-            valueOn: ['OK', true],
-            valueOff: ['EMPTY', false],
+            valueOn: ['OK', 1],
+            valueOff: ['EMPTY', 0],
             description: 'Réservoir d\'eau (OK = eau présente, EMPTY = réservoir vide)',
             access: 'STATE_GET',
             // Indispensable : sans "reporting", Z2M ne crée pas la liaison (bind) du cluster
