@@ -54,7 +54,7 @@ ota:
 
 ## Zigbee2MQTT
 
-Convertisseur externe : `z2m_converter.js` (à copier dans `external_converters/`,
+Convertisseur externe : `levoit_classic300s.js` (à copier dans `external_converters/`,
 avec `advanced.enable_external_js: true`). Il expose la brumisation (lumière dimmable)
 et le niveau d'eau (`water_ok`) et active l'OTA. Non testé.
 

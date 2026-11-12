@@ -46,6 +46,10 @@ export default {
             valueOff: ['EMPTY', false],
             description: 'Réservoir d\'eau (OK = eau présente, EMPTY = réservoir vide)',
             access: 'STATE_GET',
+            // Indispensable : sans "reporting", Z2M ne crée pas la liaison (bind) du cluster
+            // genBinaryInput sur l'endpoint 2. Le firmware envoie ses rapports vers la table de
+            // liaison : sans bind, ils ne partent nulle part et l'état reste figé.
+            reporting: {min: 'MIN', max: '1_HOUR', change: 0},
         }),
     ],
 };
